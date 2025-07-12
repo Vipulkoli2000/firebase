@@ -1,4 +1,5 @@
 import { initializeApp } from 'firebase/app';
+import firebase from 'firebase/compat/app';
 import { getAuth } from 'firebase/auth';
 import { getAnalytics } from 'firebase/analytics';
 
@@ -23,8 +24,13 @@ const firebaseConfig = {
 };
 
 export const app = initializeApp(firebaseConfig);
+// initialize compat for libraries that rely on firebase v8 API
+if (firebase.apps.length === 0) {
+  firebase.initializeApp(firebaseConfig);
+}
 export const auth = getAuth(app);
 export const analytics = (typeof window !== 'undefined') ? getAnalytics(app) : null;
+export const compatApp = firebase.app();
 
 // For more information on how to access Firebase in your project,
 // see the Firebase documentation: https://firebase.google.com/docs/web/setup#access-firebase

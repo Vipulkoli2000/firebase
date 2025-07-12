@@ -1,124 +1,121 @@
-import React from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { auth } from "../firebaseConfig";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { router } from "expo-router";
-import Toast from "react-native-toast-message";
+import React, { useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, StatusBar, Animated, Dimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { Video } from 'expo-av';
+
+const { height } = Dimensions.get('window');
 
 const Index = () => {
-    const [email, setEmail] = React.useState("");
-    const [password, setPassword] = React.useState("");
-    const [loading, setLoading] = React.useState(false);
+    const slideAnimation = useRef(new Animated.Value(0)).current;
 
-    const signIn = async () => {
-        setLoading(true);
-        try {
-            const cred = await signInWithEmailAndPassword(auth, email, password);
-            if (cred) router.replace("/(tabs)");
-        } catch (error: any) {
-            console.log(error);
-            Toast.show({ type: "error", text1: "Error signing in", text2: error.message });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const goToSignUp = () => {
-        router.push("/signup");
+    const handleNavigate = (route: '/login' | '/signup') => {
+        Animated.timing(slideAnimation, {
+            toValue: -height,
+            duration: 400,
+            useNativeDriver: false,
+        }).start(() => {
+            router.push(route);
+            slideAnimation.setValue(0);
+        });
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <Text style={styles.title}>AgriSkills</Text>
-            <View style={styles.inputContainer}>
-                <TextInput
-                    placeholder="Email"
-                    value={email}
-                    onChangeText={setEmail}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    style={styles.input}
-                    placeholderTextColor="#A9A9A9"
-                />
-                <TextInput
-                    placeholder="Password"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                    style={styles.input}
-                    placeholderTextColor="#A9A9A9"
-                />
-            </View>
+        <View style={styles.container}>
+            <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+            <Video
+                source={{
+                    uri: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+                }}
+                style={styles.backgroundVideo}
+                shouldPlay
+                isLooping
+                isMuted
+                resizeMode="cover"
+                onError={e => console.log('VIDEO ERROR', e)}
+            />
+            <SafeAreaView style={styles.safeAreaContainer}>
+                <Animated.View style={[styles.contentContainer, { transform: [{ translateY: slideAnimation }] }]}>
+                    <Text style={styles.logo}>AgriSkills</Text>
+                    <Text style={styles.subtitle}>
+                        Upgrade your skills and be knowledgeable by watching videos anytime, anywhere, and any platform.
+                    </Text>
 
-            {loading ? (
-                <ActivityIndicator size="large" color="#007BFF" />
-            ) : (
-                <View style={styles.buttonContainer}>
-                    <TouchableOpacity style={styles.button} onPress={signIn}>
-                        <Text style={styles.buttonText}>Login</Text>
+                    <TouchableOpacity style={styles.loginButton} onPress={() => handleNavigate('/login')}>
+                        <Text style={styles.loginButtonText}>Login</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.button, styles.signUpButton]} onPress={goToSignUp}>
-                        <Text style={[styles.buttonText, styles.signUpButtonText]}>Create Account</Text>
+
+                    <TouchableOpacity style={styles.createAccountButton} onPress={() => handleNavigate('/signup')}>
+                        <Text style={styles.createAccountButtonText}>Create a new account</Text>
                     </TouchableOpacity>
-                </View>
-            )}
-        </SafeAreaView>
+                </Animated.View>
+            </SafeAreaView>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 20,
-        backgroundColor: "#F5F5F5",
+        backgroundColor: '#000',
     },
-    title: {
-        fontSize: 32,
-        fontWeight: "bold",
-        marginBottom: 40,
-        color: "#333",
+    backgroundVideo: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        bottom: 0,
+        right: 0,
+        width: '100%',
+        height: '100%',
     },
-    inputContainer: {
-        width: "100%",
+    safeAreaContainer: {
+        flex: 1,
+    },
+    contentContainer: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        paddingHorizontal: 30,
+        paddingBottom: 50,
+        backgroundColor: 'rgba(0, 0, 0, 0.4)', // Adds a dark overlay for text readability
+    },
+    logo: {
+        fontSize: 48,
+        fontWeight: 'bold',
+        color: '#FFFFFF',
         marginBottom: 20,
     },
-    input: {
-        backgroundColor: "#FFFFFF",
-        borderWidth: 1,
-        borderColor: "#DDD",
-        borderRadius: 8,
-        padding: 15,
-        marginVertical: 10,
+    subtitle: {
         fontSize: 16,
-        width: "100%",
+        color: 'rgba(255, 255, 255, 0.8)',
+        textAlign: 'center',
+        marginBottom: 40,
+        lineHeight: 24,
     },
-    buttonContainer: {
-        width: "100%",
-        alignItems: "center",
+    loginButton: {
+        backgroundColor: '#FFFFFF',
+        paddingVertical: 18,
+        borderRadius: 15,
+        width: '100%',
+        alignItems: 'center',
+        marginBottom: 15,
     },
-    button: {
-        backgroundColor: "#007BFF",
-        paddingVertical: 15,
-        borderRadius: 8,
-        alignItems: "center",
-        width: "100%",
-        marginVertical: 5,
+    loginButtonText: {
+        color: '#333333',
+        fontSize: 18,
+        fontWeight: 'bold',
     },
-    buttonText: {
-        color: "#FFFFFF",
-        fontSize: 16,
-        fontWeight: "bold",
+    createAccountButton: {
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        paddingVertical: 18,
+        borderRadius: 15,
+        width: '100%',
+        alignItems: 'center',
     },
-    signUpButton: {
-        backgroundColor: "#FFFFFF",
-        borderWidth: 1,
-        borderColor: "#007BFF",
-    },
-    signUpButtonText: {
-        color: "#007BFF",
+    createAccountButtonText: {
+        color: '#FFFFFF',
+        fontSize: 18,
+        fontWeight: 'bold',
     },
 });
 

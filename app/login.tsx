@@ -2,32 +2,25 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { auth } from '../firebaseConfig';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { router } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
 
-const SignUp = () => {
-    const [fullName, setFullName] = useState('');
+const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [passwordVisible, setPasswordVisible] = useState(false);
-    const [agreeToTerms, setAgreeToTerms] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [passwordVisible, setPasswordVisible] = useState(false);
 
-    const signUp = async () => {
-        if (!agreeToTerms) {
-            Toast.show({ type: 'error', text1: 'Terms not accepted', text2: 'Please agree to the terms and conditions.' });
-            return;
-        }
+    const signIn = async () => {
         setLoading(true);
         try {
-            const cred = await createUserWithEmailAndPassword(auth, email, password);
-            // You might want to save the full name to your database here
+            const cred = await signInWithEmailAndPassword(auth, email, password);
             if (cred) router.replace('/dashboard');
         } catch (error: any) {
             console.log(error);
-            Toast.show({ type: 'error', text1: 'Error signing up', text2: error.message });
+            Toast.show({ type: 'error', text1: 'Error signing in', text2: error.message });
         } finally {
             setLoading(false);
         }
@@ -38,21 +31,11 @@ const SignUp = () => {
             <StatusBar barStyle="light-content" />
             <View style={styles.headerContainer}></View>
             <View style={styles.formContainer}>
-                <Text style={styles.title}>Create Your Account</Text>
-                <Text style={styles.subtitle}>Create your account to start your journey</Text>
+                <Text style={styles.title}>Login</Text>
+                <Text style={styles.subtitle}>Your journey is finally here</Text>
 
-                <Text style={styles.label}>Full Name</Text>
                 <TextInput
-                    placeholder="Enter your full name"
-                    value={fullName}
-                    onChangeText={setFullName}
-                    style={styles.input}
-                    placeholderTextColor="#B0B0B0"
-                />
-
-                <Text style={styles.label}>Email</Text>
-                <TextInput
-                    placeholder="Enter your email address"
+                    placeholder="Username or Email"
                     value={email}
                     onChangeText={setEmail}
                     autoCapitalize="none"
@@ -60,8 +43,6 @@ const SignUp = () => {
                     style={styles.input}
                     placeholderTextColor="#B0B0B0"
                 />
-
-                <Text style={styles.label}>Password</Text>
                 <View style={styles.passwordContainer}>
                     <TextInput
                         placeholder="Enter your password"
@@ -76,27 +57,22 @@ const SignUp = () => {
                     </TouchableOpacity>
                 </View>
 
-                <View style={styles.termsContainer}>
-                    <TouchableOpacity onPress={() => setAgreeToTerms(!agreeToTerms)} style={styles.checkbox}>
-                        {agreeToTerms && <Ionicons name="checkmark" size={20} color="#FFFFFF" />}
-                    </TouchableOpacity>
-                    <Text style={styles.termsText}>
-                        I agree to the <Text style={styles.linkText}>Term & Conditions</Text> and <Text style={styles.linkText}>Privacy Policy</Text>
-                    </Text>
-                </View>
+                <TouchableOpacity onPress={() => router.push('/forgot-password')}>
+                    <Text style={styles.forgotPassword}>Forgot password?</Text>
+                </TouchableOpacity>
 
                 {loading ? (
                     <ActivityIndicator size="large" color="#4A7C59" style={{ marginTop: 20 }} />
                 ) : (
-                    <TouchableOpacity style={styles.signUpButton} onPress={signUp}>
-                        <Text style={styles.signUpButtonText}>Sign Up</Text>
+                    <TouchableOpacity style={styles.loginButton} onPress={signIn}>
+                        <Text style={styles.loginButtonText}>Login</Text>
                     </TouchableOpacity>
                 )}
 
-                <View style={styles.signInContainer}>
-                    <Text style={styles.signInText}>Already have account? </Text>
-                    <TouchableOpacity onPress={() => router.back()}>
-                        <Text style={[styles.signInText, styles.signInLink]}>Sign in</Text>
+                <View style={styles.signupContainer}>
+                    <Text style={styles.signupText}>Don't have account? </Text>
+                    <TouchableOpacity onPress={() => router.push('/signup')}>
+                        <Text style={[styles.signupText, styles.signupLink]}>Create one!</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -110,20 +86,22 @@ const styles = StyleSheet.create({
         backgroundColor: '#E6F2F2',
     },
     headerContainer: {
-        flex: 0.3,
+        flex: 0.4,
         backgroundColor: '#4A7C59',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     formContainer: {
-        flex: 0.7,
+        flex: 0.6,
         backgroundColor: '#FFFFFF',
         borderTopLeftRadius: 30,
         borderTopRightRadius: 30,
         paddingHorizontal: 25,
         paddingTop: 30,
-        marginTop: -30,
+        marginTop: -30, // To pull the form container up over the header
     },
     title: {
-        fontSize: 28,
+        fontSize: 32,
         fontWeight: 'bold',
         color: '#333333',
         textAlign: 'center',
@@ -133,12 +111,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#666666',
         textAlign: 'center',
-        marginBottom: 25,
-    },
-    label: {
-        fontSize: 14,
-        color: '#333333',
-        marginBottom: 5,
+        marginBottom: 30,
     },
     input: {
         backgroundColor: '#F0F4F3',
@@ -156,32 +129,14 @@ const styles = StyleSheet.create({
     eyeIcon: {
         position: 'absolute',
         right: 15,
-        top: 15,
+        top: 15, // Adjust based on padding
     },
-    termsContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    forgotPassword: {
+        color: '#4A7C59',
+        textAlign: 'right',
         marginBottom: 20,
     },
-    checkbox: {
-        width: 24,
-        height: 24,
-        backgroundColor: '#4A7C59',
-        borderRadius: 5,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 10,
-    },
-    termsText: {
-        flex: 1,
-        fontSize: 14,
-        color: '#666666',
-    },
-    linkText: {
-        color: '#4A7C59',
-        fontWeight: 'bold',
-    },
-    signUpButton: {
+    loginButton: {
         backgroundColor: '#4A7C59',
         paddingVertical: 15,
         borderRadius: 10,
@@ -189,24 +144,24 @@ const styles = StyleSheet.create({
         width: '100%',
         marginTop: 10,
     },
-    signUpButtonText: {
+    loginButtonText: {
         color: '#FFFFFF',
         fontSize: 18,
         fontWeight: 'bold',
     },
-    signInContainer: {
+    signupContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
         marginTop: 20,
     },
-    signInText: {
+    signupText: {
         color: '#666666',
         fontSize: 14,
     },
-    signInLink: {
+    signupLink: {
         color: '#4A7C59',
         fontWeight: 'bold',
     },
 });
 
-export default SignUp;
+export default Login;
