@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { auth } from '../firebaseConfig';
+import { getDatabase, ref, set } from 'firebase/database';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { router } from 'expo-router';
 import Toast from 'react-native-toast-message';
@@ -23,8 +24,16 @@ const SignUp = () => {
         setLoading(true);
         try {
             const cred = await createUserWithEmailAndPassword(auth, email, password);
-            // You might want to save the full name to your database here
-            if (cred) router.replace('/dashboard');
+            if (cred) {
+                const db = getDatabase();
+                const role = 'user';
+                await set(ref(db, `users/${cred.user.uid}`), {
+                    email,
+                    role,
+                    fullName,
+                });
+                router.replace('/dashboard');
+            }
         } catch (error: any) {
             console.log(error);
             Toast.show({ type: 'error', text1: 'Error signing up', text2: error.message });

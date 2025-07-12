@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator,
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { auth } from '../firebaseConfig';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { getDatabase, ref, get, set } from 'firebase/database';
 import { router } from 'expo-router';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,7 +18,17 @@ const Login = () => {
         setLoading(true);
         try {
             const cred = await signInWithEmailAndPassword(auth, email, password);
-            if (cred) router.replace('/dashboard');
+            if (cred) {
+                const db = getDatabase();
+                const snap = await get(ref(db, `users/${cred.user.uid}/role`));
+                let role: string | null = snap.exists() ? snap.val() : null;
+                if (!role) {
+                    role = email.toLowerCase() === 'admin@gmail.com' ? 'admin' : 'user';
+                    // write missing profile so it shows in admin list
+                    await set(ref(db, `users/${cred.user.uid}`), { email, role });
+                }
+                router.replace(role === 'admin' ? ('/admin' as any) : ('/dashboard' as any));
+            }
         } catch (error: any) {
             console.log(error);
             Toast.show({ type: 'error', text1: 'Error signing in', text2: error.message });
